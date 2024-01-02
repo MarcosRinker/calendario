@@ -8,8 +8,9 @@ const calendar = document.querySelector(".calendar"),
     dateInput = document.querySelector(".date-input"),
     eventsContainer = document.querySelector(".events"),
     eventDay = document.querySelector(".event-day"),
-    eventDate = document.querySelector(".event-date");
-    
+    eventDate = document.querySelector(".event-date"),
+    addEventSubmit = document.querySelector(".add-event-btn");
+
 
 
 
@@ -35,24 +36,30 @@ const months = [
 ];
 
 //default events array
-const eventsArr = [
-    {
-        day: 15,
-        month: 12,
-        year: 2023,
-        events: [
-            {
-                title: "Event 1",
-                time: "10:00 AM",
-            },
-            {
-                title: "Event 2",
-                time: "11:00 AM",
-            },
-        ],
-    },
-];
+//const eventsArr = [
+//   {
+//        day: 15,
+//        month: 12,
+//        year: 2023,
+//        events: [
+//            {
+//                title: "Event 1",
+//                time: "10:00 AM",
+//            },
+//            {
+//                title: "Event 2",
+//                time: "11:00 AM",
+//           },
+//        ],
+//    },
+//];
 
+
+//set a empty array
+let eventsArr = [];
+
+//then call get
+getEvents();
 
 
 
@@ -302,7 +309,8 @@ function addListner() {
 
                     //after going to prev month add active to clicked
                     days.forEach((day) => {
-                        if (!day.classList.contains("prev-date") &&
+                        if (
+                            !day.classList.contains("prev-date") &&
                             day.innerHTML == e.target.innerHTML
                         ) {
                             day.classList.add("active");
@@ -388,9 +396,164 @@ function updateEvents(date) {
                 </div>`;
     }
 
-    console.log(events);
+    
     eventsContainer.innerHTML = events;
+    
+    //save events when update events called
+    saveEvents();
 
 }
 
 //lets creat function to add events
+addEventSubmit.addEventListener("click", () => {
+    const eventTitle = addEventTitle.value;
+    const eventTimeFrom = addEventFrom.value;
+    const eventTimeTo = addEventTo.value;
+
+    //some validation
+    if (
+        eventTitle === "" &&
+        eventTimeFrom === "" &&
+        eventTimeTo === ""
+    ) {
+        alert("Please fill all the fields");
+        return
+    }
+
+
+    const timeFromArr = eventTimeFrom.split(":");
+    const timeToArr = eventTimeTo.split(":");
+
+    if (
+        timeFromArr.length !== 2 ||
+        timeToArr.length !== 2 ||
+        timeFromArr[0] > 23 ||
+        timeFromArr[1] > 59 ||
+        timeToArr[0] > 23 ||
+        timeToArr[1] > 59
+
+    ) {
+        alert("Invalid Time Format");
+
+    }
+
+    const timeFrom = convertTime(eventTimeFrom);
+    const timeTo = convertTime(eventTimeTo);
+
+    const newEvent = {
+        title: eventTitle,
+        time: timeFrom + " - " + timeTo,
+    };
+
+
+    let eventAdded = false;
+
+    //check if eventsarr not empty
+    if (eventsArr.length > 0) {
+        //check if courrent day has laredy any even then to that
+        eventsArr.forEach((item) => {
+            if (
+                item.day === activeDay &&
+                item.month === month + 1 &&
+                item.year === year
+            ) {
+                item.events.push(newEvent);
+                eventAdded = true;
+            }
+        });
+    }
+
+    //if event array empty or current day has no event create new
+    if (!eventAdded) {
+        eventsArr.push({
+            day: activeDay,
+            month: month + 1,
+            year: year,
+            events: [newEvent],
+        })
+    }
+
+    //remove active from add event form
+    addEventContainer.classList.remove("active")
+
+    //clear the fields
+    addEventTitle.value = "";
+    addEventFrom.value = "";
+    addEventTo.value = "";
+
+
+    //show current added event
+    updateEvents(activeDay);
+
+
+    //also add event class to newly added day if not already
+    const activeDayElem = document.querySelector(".day.active");
+    if (!activeDayElem.classList.contains("event")) {
+        activeDayElem.classList.add("event");
+    }
+
+
+});
+
+function convertTime(time) {
+    //convert time to 24 hour format
+    let timeArr = time.split(":");
+    let timeHour = timeArr[0];
+    let timeMin = timeArr[1];
+    let timeFormat = timeHour >= 12 ? "PM" : "AM";
+    timeHour = timeHour % 12 || 12;
+    time = timeHour + ":" + timeMin + " " + timeFormat;
+    return time;
+}
+
+//lets create function to remove events on click
+eventsContainer.addEventListener("click", (e) => {
+    if (e.target.classList.contains("event")) {
+        const eventTitle = e.target.children[0].children[1].innerHTML
+       
+        
+
+        //get the title of events than search in array by litle and delete
+        eventsArr.forEach((event) => {
+            if (
+                event.day === activeDay &&
+                event.month === month + 1 &&
+                event.year === year
+
+            ) {
+                event.events.forEach((item, index) => {
+                    if (item.title === eventTitle) {
+                        event.events.splice(index, 1);
+                    }
+                });
+                //if no events remaing on that dat remove complete day
+                if(event.events.length === 0){
+                    eventsArr.splice(eventsArr.indexOf(event), 1);
+
+                    //after remove complete day also remove active class of that day
+                    const activeDayElem = document.querySelector(".day.active")
+                    if(activeDayElem.classList.contains("event")){
+                        activeDayElem.classList.remove("event");
+                    }
+                }
+            }
+        });
+        //after removing fonr array update event
+        updateEvents(activeDay);
+    }
+});
+
+
+//lets store events in local storage get from there
+function saveEvents(){
+    localStorage.setItem("events", JSON.stringify(eventsArr));
+}
+
+function getEvents(){
+    if(localStorage.getItem("events" === null)){
+        return
+    }
+        eventsArr.push(...JSON.parse(localStorage.getItem("events")));
+    }
+
+
