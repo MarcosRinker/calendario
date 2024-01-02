@@ -100,10 +100,11 @@ function initCalendar() {
             month == new Date().getMonth()
         ) {
             //if event found also add event class
+            //add active on today at startup
             if(event){
-                days += `<div class = "day today event">${i}</div>`;
+                days += `<div class = "day today active event">${i}</div>`;
             }else{
-                days += `<div class = "day today">${i}</div>`;
+                days += `<div class = "day today active">${i}</div>`;
             }
         }
         //add remaing as it is
@@ -122,6 +123,9 @@ function initCalendar() {
     }
 
     daysContainer.innerHTML = days;
+
+    //add listner after calendar initialized
+    addListner();
 
 }
 
@@ -260,3 +264,69 @@ addEventTo.addEventListener("input", (e) => {
         addEventTo.value = addEventTo.value.slice(0, 5);
     }
 })
+
+
+// Lets create function to add lostner on days after rendered
+function addListner(){
+    const days = document.querySelectorAll(".day");
+    days.forEach((day) => {
+        day.addEventListener("click", (e) => {
+            //set current day as active day
+            activeDay = Number(e.target.innerHTML);
+
+            //remove active from already active day
+            days.forEach((day) => {
+                day.classList.remove("active");
+            });
+
+            //if prev month day clicked goto prev month and add active
+            if(e.target.classList.contains("prev-date")){
+                prevMonth();
+
+                setTimeout(() =>{
+                    //select all days of that months
+                    const days = document.querySelectorAll(".day");
+
+                    //after going to prev month add active to clicked
+                    days.forEach((day) => {
+                        if(!day.classList.contains("prev-date") && 
+                        day.innerHTML == e.target.innerHTML
+                        ){
+                            day.classList.add("active");
+                        }
+                    });
+                }, 100);
+                //same with next days
+            }else if(e.target.classList.contains("next-date")){
+                    nextMonth();
+    
+                    setTimeout(() =>{
+                        //select all days of that months
+                        const days = document.querySelectorAll(".day");
+    
+                        //after going to prev month add active to clicked
+                        days.forEach((day) => {
+                            if(!day.classList.contains("next-date") && 
+                            day.innerHTML == e.target.innerHTML
+                            ){
+                                day.classList.add("active");
+                            }
+                        });
+                    }, 100);
+                    
+               }else{
+                //renaing current month days
+                e.target.classList.add("active");
+               }
+
+
+            
+
+
+
+        });
+    });
+}
+
+
+//lets show active day events and date at top
