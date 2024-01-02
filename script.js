@@ -6,7 +6,10 @@ const calendar = document.querySelector(".calendar"),
     todayBtn = document.querySelector(".today-btn"),
     gotoBtn = document.querySelector(".goto-btn"),
     dateInput = document.querySelector(".date-input"),
-    eventsContainer = document.querySelector(".events")   ;
+    eventsContainer = document.querySelector(".events"),
+    eventDay = document.querySelector(".event-day"),
+    eventDate = document.querySelector(".event-date");
+    
 
 
 
@@ -82,13 +85,13 @@ function initCalendar() {
         //check if event is present on that day
         let event = false;
         eventsArr.forEach((eventObj) => {
-          if (
-            eventObj.day === i &&
-            eventObj.month === month + 1 &&
-            eventObj.year === year
-          ) {
-            event = true;
-          }
+            if (
+                eventObj.day === i &&
+                eventObj.month === month + 1 &&
+                eventObj.year === year
+            ) {
+                event = true;
+            }
         });
 
 
@@ -99,19 +102,23 @@ function initCalendar() {
             year == new Date().getFullYear() &&
             month == new Date().getMonth()
         ) {
+            activeDay = i;
+            getActiveDay(i);
+            updateEvents(i);
+
             //if event found also add event class
             //add active on today at startup
-            if(event){
+            if (event) {
                 days += `<div class = "day today active event">${i}</div>`;
-            }else{
+            } else {
                 days += `<div class = "day today active">${i}</div>`;
             }
         }
         //add remaing as it is
         else {
-            if(event){
+            if (event) {
                 days += `<div class = "day  event">${i}</div>`;
-            }else{
+            } else {
                 days += `<div class = "day ">${i}</div>`;
             }
         }
@@ -267,12 +274,18 @@ addEventTo.addEventListener("input", (e) => {
 
 
 // Lets create function to add lostner on days after rendered
-function addListner(){
+function addListner() {
     const days = document.querySelectorAll(".day");
     days.forEach((day) => {
         day.addEventListener("click", (e) => {
             //set current day as active day
             activeDay = Number(e.target.innerHTML);
+
+            //call active day after click
+            getActiveDay(e.target.innerHTML);
+            updateEvents(Number(e.target.innerHTML));
+
+
 
             //remove active from already active day
             days.forEach((day) => {
@@ -280,47 +293,47 @@ function addListner(){
             });
 
             //if prev month day clicked goto prev month and add active
-            if(e.target.classList.contains("prev-date")){
+            if (e.target.classList.contains("prev-date")) {
                 prevMonth();
 
-                setTimeout(() =>{
+                setTimeout(() => {
                     //select all days of that months
                     const days = document.querySelectorAll(".day");
 
                     //after going to prev month add active to clicked
                     days.forEach((day) => {
-                        if(!day.classList.contains("prev-date") && 
-                        day.innerHTML == e.target.innerHTML
-                        ){
+                        if (!day.classList.contains("prev-date") &&
+                            day.innerHTML == e.target.innerHTML
+                        ) {
                             day.classList.add("active");
                         }
                     });
                 }, 100);
                 //same with next days
-            }else if(e.target.classList.contains("next-date")){
-                    nextMonth();
-    
-                    setTimeout(() =>{
-                        //select all days of that months
-                        const days = document.querySelectorAll(".day");
-    
-                        //after going to prev month add active to clicked
-                        days.forEach((day) => {
-                            if(!day.classList.contains("next-date") && 
+            } else if (e.target.classList.contains("next-date")) {
+                nextMonth();
+
+                setTimeout(() => {
+                    //select all days of that months
+                    const days = document.querySelectorAll(".day");
+
+                    //after going to prev month add active to clicked
+                    days.forEach((day) => {
+                        if (!day.classList.contains("next-date") &&
                             day.innerHTML == e.target.innerHTML
-                            ){
-                                day.classList.add("active");
-                            }
-                        });
-                    }, 100);
-                    
-               }else{
+                        ) {
+                            day.classList.add("active");
+                        }
+                    });
+                }, 100);
+
+            } else {
                 //renaing current month days
                 e.target.classList.add("active");
-               }
+            }
 
 
-            
+
 
 
 
@@ -329,4 +342,55 @@ function addListner(){
 }
 
 
+
+
 //lets show active day events and date at top
+function getActiveDay(date) {
+    const day = new Date(year, month, date);
+    const dayName = day.toString().split(" ")[0];
+    eventDay.innerHTML = dayName;
+    eventDate.innerHTML = date + " " + months[month] + " " + year;
+}
+
+
+//function to show events os that day
+function updateEvents(date) {
+    let events = "";
+    eventsArr.forEach((event) => {
+        //get events of active day only
+        if (
+            date === event.day &&
+            month + 1 === event.month &&
+            year === event.year
+        ) {
+            // then show event on document
+            event.events.forEach((event) => {
+                events += `
+                    <div class="event">
+                        <div class="title">
+                            <i class="fas fa-circle"></i>
+                            <h3 class="event-title">${event.title}</h3>
+                        </div>
+                        <div class="event-time">
+                            <span class="event-time">${event.time}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+    });
+
+    //if nothing found
+    if (events == "") {
+        events = `
+            <div class="no-event">
+                 <h3>No events</h3>
+                </div>`;
+    }
+
+    console.log(events);
+    eventsContainer.innerHTML = events;
+
+}
+
+//lets creat function to add events
